@@ -11,7 +11,7 @@ require 'ostruct'
 options = OpenStruct.new
 OptionParser.new do |opt|
   opt.on('-o', '--output_file OUTPUT_FILE', 'The output file name') { |o| options.output_file = o }
-  opt.on('-s', '--size SIZE', 'The size of output file in bytes') { |o| options.size = o }
+  opt.on('-s', '--size SIZE', 'The size of output file in bytes')   { |o| options.size = o }
 end.parse!
 
 puts "Output File:[" + options.output_file + "]"
@@ -22,8 +22,13 @@ size_of_output_file = options.size.to_i
 #####
 # Experimenting. Keep file size small.
 #####
-if size_of_output_file >= 1000
+if size_of_output_file >= 10000
   puts "Size too big."
+  exit
+end
+
+if size_of_output_file < 1
+  puts "Size too small."
   exit
 end
 
@@ -35,7 +40,8 @@ if File.exists?(options.output_file)
   exit
 else
   random_string = Random.new.bytes(size_of_output_file)
-  File.open(options.output_file, 'w') { |file| file.write(random_string) }
+  # Notice, opening in binary mode.
+  File.open(options.output_file, 'wb') { |file| file.write(random_string) }
 end
 
 

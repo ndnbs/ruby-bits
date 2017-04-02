@@ -10,65 +10,76 @@ require 'ostruct'
 
 options = OpenStruct.new
 OptionParser.new do |opt|
-  opt.on('-i', '--input_file INPUT_FILE', 'Input file name') { |o| options.input_file = o }
-  opt.on('-o', '--output_file OUTPUT_FILE', 'Output file name') { |o| options.output_file = o }
-  opt.on('-x', '--input_xor_file', 'Input XOR file') { |o| options.input_xor_file = o }
+  opt.on('-i', '--input_file FILENAME', 'Input file name')    { |o| options.input_file = o }
+  opt.on('-o', '--output_file FILENAME', 'Output file name')  { |o| options.output_file = o }
+  opt.on('-x', '--xor_input_file FILENAME', 'XOR input file') { |o| options.xor_input_file = o }
 end.parse!
 
-puts "Input File     :[" + options.input_file + "]"
-puts "Output File    :[" + options.output_file + "]"
-puts "Input XOR File :[" + options.input_xor_file + "]"
+ifn = options.input_file.to_s
+ofn = options.output_file.to_s
+xfn = options.xor_input_file.to_s
+
+puts "==========================================================================================="
+puts "Input File     :[" + ifn + "]"
+puts "XOR Input File :[" + xfn + "]"
+puts "Output File    :[" + ofn + "]"
+puts "==========================================================================================="
 
 #####
 # Ensure that input file exists. 
 #####
-unless File.exists?(options.input_file)
-  puts "Input file does not exist."
+unless File.exists?(ifn)
+  puts "Input file: [" + ifn + "] does not exist."
   exit
 end
 
 #####
-# Ensure that input XOR file exists. 
+# Ensure that XOR input file exists. 
 #####
-unless File.exists?(options.input_xor_file)
-  puts "Input XOR file does not exist."
+unless File.exists?(xfn)
+  puts "XOR input file: [" + xfn + "] does not exist."
   exit
 end
 
 #####
 # Ensure that input file and input XOR file are exactly the same size. 
 #####
-unless ((File.stat(options.input_file).size) == (File.stat(options.input_xor_file).size))
-  puts "Input file and input XOR file must be exactly the same size."
+unless ((File.stat(ifn).size) == (File.stat(xfn).size))
+  puts "Input file: [" + ifn + "] and input XOR file: [" + xfn + "] must be exactly the same size."
   exit
 end
 
 #####
 # Don't overwrite existing file. 
 #####
-if File.exists?(options.output_file)
-  puts "Output file already exists. Won't overwrite."
+if File.exists?(ofn)
+  puts "Output file: [" + ofn + "] already exists. Will not overwrite."
   exit
 end
 
 #####
-# Now, open our two(2) input files and one(1) output file.
+# Now, open our XOR input file(rb) and output file(wb). 
 #####
-input_xor_fd = File.open(options.input_xor_file, 'rb')
-output_fd    = File.open(options.output_file, 'wb')
+xor_input_fd = File.open(xfn, 'rb')
+output_fd    = File.open(ofn, 'wb')
 
-File.open(options.input_file, 'rb') do |input_fd|
+#####
+# Earlier, we have already established that the input file and input XOR file are exactly
+# the same size. So, when we read from one, we can safely read from the other.
+#####
+File.open(ifn, 'rb') do |input_fd|
   until input_fd.eof?
-    input_buffer     = input_fd.read(1)
-    input_xor_buffer = input_xor_fd.read(1)
-    # Do something with buffer
-    # puts buffer
-    output_fd.write(input_buffer.to_i(2) ^ input_xor_buffer.to_i(2))
+    input_byte     = input_fd.read(1)
+    xor_input_byte = xor_input_fd.read(1)
+    # Write the XORed byte out.
+    output_fd.write((input_byte.to_i(2)) ^ (xor_input_byte.to_i(2)))
   end
 end
 
-#{ |file| file.write(random_string) }
-#random_string = Random.new.bytes(size_of_output_file)
-#File.open(options.output_file, 'w') { |file| file.write(random_string) }
+puts "\nDone generating output file: [" + ofn + "]"
+puts "===========================================================================================\n"
+exit
 
-
+################################################################################
+################################# EOF ##########################################
+################################################################################
